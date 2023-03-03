@@ -15,7 +15,9 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from Movie.views import product_list_api_view, product_detail_api_view, directors_list_api_view, director_detail_api_view, review_detail_api_view, review_list_api_view
+from Movie.views import product_list_api_view, product_detail_api_view, \
+    directors_list_api_view, director_detail_api_view, \
+    review_detail_api_view, review_list_api_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),

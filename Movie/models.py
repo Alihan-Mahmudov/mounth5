@@ -12,10 +12,11 @@ class Tag(models.Model):
 
 class Product(models.Model):
     title = models.TextField()
-    tag = models.ManyToManyField(Tag, blank=True)
+    tags = models.ManyToManyField(Tag, blank=True)
     description = models.CharField(max_length=500)
     duration = models.IntegerField()
     director = models.ForeignKey(Director, on_delete=models.CASCADE, null=True, blank=True)
+    is_active = models.BooleanField(default=True)
     def __str__(self):
         return self.title
 
