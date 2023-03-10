@@ -1,71 +1,81 @@
 from rest_framework import serializers
-from .models import Product, Review, Director, Tag
+from .models import Director, Movie, Review
 from rest_framework.exceptions import ValidationError
 
+
+class DirectorSerializer(serializers.ModelSerializer):
+    movie_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Director
+        fields = 'id name movie_count'.split()
+
+    def get_movie_count(self, director):
+        return director.movie_set.count()
+
+
 class ReviewSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Review
         fields = '__all__'
 
-class TagSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Tag
-        fields = '__all__'
 
-class DirectorSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Director
-        fields = '__all__'
-
-class ProductSerializer(serializers.ModelSerializer):
-    tags = TagSerializer(many=True)
-    director = DirectorSerializer
+class MovieSerializer(serializers.ModelSerializer):
+    reviews = ReviewSerializer(many=True, read_only=True)
 
     class Meta:
-        model = Product
+        model = Movie
         fields = '__all__'
 
-class ProductValidateSerializer(serializers.Serializer):
-    title = serializers.CharField()
-    tags = serializers.ListField(child=serializers.IntegerField())
-    description = serializers.CharField(max_length=500)
-    duration = serializers.IntegerField()
-    director = serializers.IntegerField()
-    is_active = serializers.BooleanField(default=True)
 
-    def validate_director_id(self, director):  # 100
+class DirectorValidateSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=50, min_length=1)
+
+    def validate_director(self, director_id):
         try:
-            Director.objects.get(id=director)
+            Director.objects.get(id=director_id)
         except Director.DoesNotExist:
-            raise ValidationError('This category does not exists!')
-        return director
-
-    def validate_tags(self, tags):  # [1,2,100]
-        tags_db = Tag.objects.filter(id__in=tags)
-        if len(tags_db) != len(tags):
-            raise ValidationError('Tag does not exists')
-        return tags
-
-class ProductCreateSerializer(ProductValidateSerializer):
-    pass
+            raise ValidationError('This director does not exists!')
+        return director_id
 
 
-class ProductUpdateSerializer(ProductValidateSerializer):
-    pass
+class MovieValidateSerializer(serializers.Serializer):
+    title = serializers.CharField(min_length=1, max_length=50)
+    description = serializers.CharField(max_length=200)
+    duration = serializers.FloatField()
+    director = serializers.IntegerField()
 
+    def validate_movie(self, movie):
+        try:
+            Movie.objects.get(id=movie)
+        except Movie.DoesNotExist:
+            raise ValidationError('This Movie does not exists!')
+        return movie
 
-class DirectrValidateSerializer(serializers.Serializer):
-    name = serializers.CharField(required=True)
-
+    def validate_director(self, director_id):
+        try:
+            Director.objects.get(id=director_id)
+        except Director.DoesNotExist:
+            raise ValidationError('This director does not exists!')
+        return director_id
 
 
 class ReviewValidateSerializer(serializers.Serializer):
-    text = serializers.CharField(required=True, max_length=500)
-    stars = serializers.IntegerField(required=True)
+    text = serializers.CharField()
+    movie = serializers.IntegerField()
+    stars = serializers.IntegerField()
 
-    def review_validate_stars(self, stars):
-        if stars > 5:
-            raise ValidationError('Too many stars max value=5')
-        elif stars < 1:
-            raise ValidationError('Too few stars min value=5')
+    def validate_review(self, review_id):
+        try:
+            Review.objects.get(id=review_id)
+        except Review.DoesNotExist:
+            raise ValidationError('This review does not exists!')
+        return review_id
 
+    def validate_movie(self, movie):
+        try:
+            Movie.objects.get(id=movie)
+        except Movie.DoesNotExist:
+            raise ValidationError('This Movie does not exists!')
+        return movie
